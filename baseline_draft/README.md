@@ -1,10 +1,10 @@
 # Baseline methods: IIC, MDC and PiCIE
 
-**important file paths (for quick reference, not complete)**
+**Note: important file paths (for quick reference, not complete)**
 
 ## [Invariant Information Clustering (IIC)](https://github.com/xu-ji/IIC)
 
-![IIC](assets/IIC.png)
+<img src="assets/IIC.png" width="60%" height="60%">
 
 run: `train_iic_rgb.sh` or `train_iic_rgbd.sh`
 
@@ -24,18 +24,19 @@ run: `sh_files/train_picie_rgb.sh` or `sh_files/train_picie_rgbd.sh`
 dataset: `data/rgb_train_dataset.py` or `data/rgbd_train_dataset.py`
 
 model: `modules/fpn.py`
--[x] ResNet: `modules/backbone.py`
--[ ] ViT: TBD
+- [x] ResNet: `modules/backbone.py`
+- [ ] ViT: TBD
 
 
 ## [Modified DeepCluster (MDC)](https://github.com/facebookresearch/deepcluster)
 
-![MDC](assets/MDC.png)
+
+<img src="assets/MDC.png" width="80%" height="80%">
 
 run: `sh_files/train_mdc_rgb.sh` or `sh_files/train_mdc_rgbd.sh`
 
 dataset: `data/rgb_train_dataset.py` or `data/rgbd_train_dataset.py`
 
 model: `modules/fpn.py`
--[x] ResNet: `modules/backbone.py`
--[ ] ViT: TBD
+- [x] ResNet: `modules/backbone.py`
+- [ ] ViT: TBD
