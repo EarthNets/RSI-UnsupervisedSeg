@@ -1,11 +1,13 @@
 from .net10a import SegmentationNet10aHead, SegmentationNet10aTrunk, \
-  SegmentationNet10a
+  SegmentationNet10a, HeightDecoder, RGBDecoder
 from ..cluster.vgg import VGGNet
 import torch
 from . import fpn, backbone
 import torch.nn as nn 
 import torch.nn.functional as F
 import pdb
+from .multimodal_df import MMDFeatureFusion
+
 
 __all__ = ["SegmentationNet10aTwoHead", "SegmentationNetRN50TwoHead"]
 
@@ -17,6 +19,14 @@ class SegmentationNet10aTwoHead(VGGNet):
     self.batchnorm_track = config.batchnorm_track
 
     self.trunk = SegmentationNet10aTrunk(config, cfg=SegmentationNet10a.cfg)
+    #self.rgb_decoder = RGBDecoder()
+    #self.height_decoder = HeightDecoder()
+    #self.conv1 = nn.Conv2d(128, 256, 3, 1, 1)
+    #self.bn1 = nn.BatchNorm2d(256)
+    #self.conv2 = nn.Conv2d(256, 512, 3, 1, 1)
+    #self.bn2 = nn.BatchNorm2d(512)
+    #self.relu = nn.ReLU()
+    #self.mmfuse = MMDFeatureFusion(dim=256, fmap_size=64)
     self.head_A = SegmentationNet10aHead(config, output_k=config.output_k_A,
                                          cfg=SegmentationNet10a.cfg)
     self.head_B = SegmentationNet10aHead(config, output_k=config.output_k_B,
@@ -25,7 +35,15 @@ class SegmentationNet10aTwoHead(VGGNet):
     self._initialize_weights()
 
   def forward(self, x, head="B"):
-    x = self.trunk(x)
+    x = self.trunk(x) #4,512,252,252
+    #rgbf = self.rgb_decoder(x) #N, 512, 64, 64
+    #hout, hf = self.height_decoder(x) #N, 512, 64, 64
+    #x = self.mmfuse(rgbf, hf) #N, 128, 64, 64
+    #x = F.interpolate(x, (128,128), mode='bilinear', align_corners=True)
+    #x = self.relu(self.bn1(self.conv1(x)))
+    #x = F.interpolate(x, (252,252), mode='bilinear', align_corners=True)
+    #x = self.relu(self.bn2(self.conv2(x)))
+
     if head == "A":
       x = self.head_A(x)
     elif head == "B":
@@ -33,6 +51,7 @@ class SegmentationNet10aTwoHead(VGGNet):
     else:
       assert (False)
 
+    #return x, hout
     return x
 
 
