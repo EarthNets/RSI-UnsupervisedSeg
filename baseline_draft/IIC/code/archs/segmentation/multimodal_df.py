@@ -103,6 +103,40 @@ class MMDFeatureFusion(nn.Module):
         return mmf
 
 
+class MMDFeatureFusionSlim(nn.Module):
+    def __init__(self, dim, fmap_size, reduction=1):
+        super(MMDFeatureFusionSlim, self).__init__()
+        self.channel_rectify = ChannelRectify(channels=dim)
+        self.lbd = nn.Parameter(torch.zeros([1]))
+        self.lbd_rgb = nn.Parameter(torch.ones([1])*0.5)
+        self.lbd_h = nn.Parameter(torch.ones([1])*0.5)
+        self.MMDAT = MMDTransformer(fmap_size, dim_in=dim)
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+        elif isinstance(m, nn.Conv2d):
+            fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            fan_out //= m.groups
+            m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
+            if m.bias is not None:
+                m.bias.data.zero_()
+
+    def forward(self, rgb, h):
+        channel_weights = self.channel_rectify(rgb, h)
+        out_rgb = rgb + self.lbd * channel_weights[1] * h
+        out_h = h + self.lbd * channel_weights[0] * rgb
+        mmf = self.lbd_rgb * out_rgb + self.lbd_h * out_h
+        mmf, _ ,_ = self.MMDAT(mmf)
+        return mmf
+
+
 class MMDTransformer(nn.Module):
     def __init__(self, fmap_size, window_size=3, ns_per_pt=4,
                  dim_in=64, dim_embed=128, depths=1, stage_spec='D', n_groups=4,
@@ -349,7 +383,7 @@ if __name__=='__main__':
     rgb = torch.randn([1,128,64,64]).cuda()
     h = torch.randn([1,128,64,64]).cuda()
     import time
-    m1 = MMDFeatureFusion(128,64).cuda()
+    m1 = MMDFeatureFusionSlim(128,64).cuda()
     st = 0
     for i in range(10):
         t1 = time.time()
